@@ -2,14 +2,19 @@
 LangChain vector store and agent setup for Autonomous Prompt-Based Assistant.
 """
 
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.vectorstores import FAISS
+#from langchain.embeddings import OpenAIEmbeddings
+from langchain_community.embeddings import OpenAIEmbeddings
+#from langchain.vectorstores import FAISS
+from langchain_community.vectorstores import FAISS
 from langchain.text_splitter import CharacterTextSplitter
-from langchain.chat_models import ChatOpenAI
+#from langchain.chat_models import ChatOpenAI
+from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import RetrievalQA
 from langchain.docstore.document import Document
 import pandas as pd
 import os
+
+
 
 DATA_PATH = "data/raw/company_faq.csv"
 VECTOR_DIR = "models/vector_store"
@@ -28,8 +33,23 @@ def create_vector_store():
     vectordb.save_local(VECTOR_DIR)
     return vectordb
 
-def load_qa_chain():
+"""def load_qa_chain():
     vectordb = FAISS.load_local(VECTOR_DIR, OpenAIEmbeddings())
     llm = ChatOpenAI(temperature=0.3)
     qa = RetrievalQA.from_chain_type(llm=llm, retriever=vectordb.as_retriever())
+    return qa"""
+
+def load_qa_chain():
+    if not os.path.exists(os.path.join(VECTOR_DIR, "index.faiss")):
+        raise FileNotFoundError("FAISS index not found. Run model_training.py first.")
+
+    vectordb = FAISS.load_local(
+        folder_path=VECTOR_DIR,
+        embeddings=OpenAIEmbeddings(),
+        allow_dangerous_deserialization=True
+    )
+    llm = ChatOpenAI(temperature=0.3)
+    qa = RetrievalQA.from_chain_type(llm=llm, retriever=vectordb.as_retriever())
     return qa
+
+
